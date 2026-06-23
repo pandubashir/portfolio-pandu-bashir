@@ -63,7 +63,6 @@ function useParallax(imgRef: RefObject<HTMLImageElement | null>) {
     function handleMove(e: MouseEvent) {
       const cx = window.innerWidth / 2
       const cy = window.innerHeight / 2
-
       targetX = (e.clientX - cx) / cx
       targetY = (e.clientY - cy) / cy
     }
@@ -71,17 +70,14 @@ function useParallax(imgRef: RefObject<HTMLImageElement | null>) {
     function animate() {
       currentX += (targetX - currentX) * 0.06
       currentY += (targetY - currentY) * 0.06
-
       if (imgRef.current) {
         imgRef.current.style.transform = `scale(1.05) translate(${currentX * 12}px, ${currentY * 8}px)`
       }
-
       raf = requestAnimationFrame(animate)
     }
 
     window.addEventListener('mousemove', handleMove)
     animate()
-
     return () => {
       window.removeEventListener('mousemove', handleMove)
       cancelAnimationFrame(raf)
@@ -92,52 +88,76 @@ function useParallax(imgRef: RefObject<HTMLImageElement | null>) {
 export function Hero() {
   const typedText = useTypedText()
   const imgRef = useRef<HTMLImageElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
 
   useParallax(imgRef)
 
+  // Kirim ulang mouse event ke canvas Spline supaya tracking-nya akurat
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+
+    function relayMouse(e: MouseEvent) {
+      const canvas = section!.querySelector('canvas')
+      if (!canvas) return
+      const syntheticEvent = new MouseEvent('mousemove', {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      })
+      canvas.dispatchEvent(syntheticEvent)
+    }
+
+    section.addEventListener('mousemove', relayMouse)
+    return () => section.removeEventListener('mousemove', relayMouse)
+  }, [])
+
   return (
     <section
+      ref={sectionRef}
       id="hero"
       className="min-h-screen flex flex-col md:flex-row items-center px-6 md:px-20 gap-10 md:gap-15 relative overflow-hidden pt-20 md:pt-0 text-center md:text-left"
     >
-      {/* Robot Spline sebagai background penuh */}
-      <div className="absolute inset-0 z-0 flex items-center justify-center">
-        <div className="relative w-full h-full opacity-75">
-          <SplineScene
-            scene={SPLINE_SCENE_URL}
-            className="w-full h-full"
-          />
+      {/* Robot Spline — full section, pointer-events aktif untuk interaksi cursor */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{ isolation: 'isolate' }}
+      >
+        <SplineScene
+          scene={SPLINE_SCENE_URL}
+          className="w-full h-full"
+        />
 
-          {/* Penutup watermark Spline */}
-          <div
-            className="absolute bottom-0 right-0 w-72 h-20 pointer-events-none"
-            style={{
-              background:
-                'linear-gradient(to top left, #080b12 65%, transparent 100%)',
-            }}
-          />
-
-          <div className="absolute bottom-0 right-0 w-56 h-12 bg-[#080b12] pointer-events-none rounded-tl-2xl" />
-        </div>
+        {/* Penutup watermark Spline — z tinggi supaya tetap tertutup */}
+        <div
+          className="absolute bottom-0 right-0 w-72 h-20 pointer-events-none"
+          style={{
+            zIndex: 10,
+            background: 'linear-gradient(to top left, #080b12 65%, transparent 100%)',
+          }}
+        />
+        <div
+          className="absolute bottom-0 right-0 w-56 h-12 pointer-events-none rounded-tl-2xl"
+          style={{ zIndex: 11, background: '#080b12' }}
+        />
       </div>
 
-      {/* Overlay */}
+      {/* Overlay gradasi — pointer-events-none agar tidak block robot */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/40 via-bg/10 to-bg/60 pointer-events-none" />
 
-      {/* Content */}
-      <div className="flex-1 relative z-10">
+      {/* Content — z lebih tinggi, pointer-events aktif untuk tombol & link */}
+      <div className="flex-1 relative z-10 pointer-events-none">
+        {/* pointer-events-none di wrapper, tapi aktif di elemen interaktif */}
         <div
-          className="inline-flex items-center gap-2 bg-accent/10 border border-accent/25 rounded-full px-4 py-1.5 text-[0.72rem] text-accent font-semibold mb-7 tracking-widest uppercase"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
+          className="inline-flex items-center gap-2 bg-accent/10 border border-accent/25 rounded-full px-4 py-1.5 text-[0.72rem] text-accent font-semibold mb-7 tracking-widest uppercase pointer-events-auto"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-green" />
           Open for opportunities
         </div>
 
-        <p
-          className="text-sm text-muted2 mb-2 tracking-widest uppercase"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
+        <p className="text-sm text-muted2 mb-2 tracking-widest uppercase">
           Hey, I'm Pandu 👋
         </p>
 
@@ -146,46 +166,34 @@ export function Hero() {
           <br />
           <span
             className="bg-gradient-to-br from-accent via-accent2 to-accent3 bg-clip-text text-transparent"
-            style={{
-              filter: 'drop-shadow(0 4px 24px rgba(139,92,246,0.35))',
-            }}
+            style={{ filter: 'drop-shadow(0 4px 24px rgba(139,92,246,0.35))' }}
           >
             Engineer
           </span>
         </h1>
 
-        <p
-          className="text-[0.85rem] text-muted2/70 font-light mb-4 tracking-[2px] leading-relaxed italic uppercase"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
+        <p className="text-[0.85rem] text-muted2/70 font-light mb-4 tracking-[2px] leading-relaxed italic uppercase">
           Where Robust Logic Meets, Seamless Execution.
         </p>
 
         <h2 className="text-[1.15rem] md:text-[1.5rem] font-light text-muted2 mb-6 tracking-wide">
           Enthusiast{' '}
-          <span className="text-accent font-semibold italic">
-            {typedText}
-          </span>
+          <span className="text-accent font-semibold italic">{typedText}</span>
           <span className="text-accent animate-blink">|</span>
         </h2>
 
-        <p
-          className="text-[0.88rem] text-muted2/80 max-w-[420px] mb-10 leading-[1.9] mx-auto md:mx-0 font-light tracking-wide"
-          style={{ fontFamily: "'DM Sans', sans-serif" }}
-        >
+        <p className="text-[0.88rem] text-muted2/80 max-w-[420px] mb-10 leading-[1.9] mx-auto md:mx-0 font-light tracking-wide">
           A Software Engineer passionate about Data Science, Data Analysis,
           and building functional systems you can rely on. Currently
-          exploring machine learning, web development, and digital
-          forensics.
+          exploring machine learning, web development, and digital forensics.
         </p>
 
-        <div className="flex gap-3.5 justify-center md:justify-start flex-wrap">
+        <div className="flex gap-3.5 justify-center md:justify-start flex-wrap pointer-events-auto">
           <a
             href="https://www.linkedin.com/in/pandu-bashir-alamin-a357a8331/"
             target="_blank"
             rel="noreferrer"
             className="px-7 py-3 rounded-xl font-semibold text-[0.82rem] no-underline transition-all border-none inline-flex items-center gap-2 tracking-widest uppercase bg-gradient-to-br from-accent to-accent2 text-white shadow-[0_8px_32px_rgba(139,92,246,0.35)] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(139,92,246,0.5)]"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
             Get In Touch →
           </a>
@@ -193,7 +201,6 @@ export function Hero() {
           <a
             href="#projects"
             className="px-7 py-3 rounded-xl font-semibold text-[0.82rem] no-underline transition-all inline-flex items-center gap-2 tracking-widest uppercase bg-white/4 border border-white/8 text-muted2 backdrop-blur-md hover:border-accent/40 hover:text-accent hover:-translate-y-0.5"
-            style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
             Browse Projects
           </a>
@@ -201,11 +208,11 @@ export function Hero() {
       </div>
 
       {/* Foto profil */}
-      <div className="relative z-10 flex-shrink-0 w-full md:w-[300px] h-[300px] md:h-[500px] md:-mr-10 md:mt-8">
+      <div className="relative z-10 flex-shrink-0 w-full md:w-[300px] h-[300px] md:h-[500px] md:-mr-10 md:mt-8 pointer-events-none">
         <img
           ref={imgRef}
           id="hero-img"
-          className="hero-profile-img relative z-10 w-full h-full object-cover object-top block transition-transform duration-100 ease-out"
+          className="hero-profile-img relative w-full h-full object-cover object-top block transition-transform duration-100 ease-out"
           src="/poto-pandu.jpeg"
           alt="Pandu Bashir Alamin"
         />
