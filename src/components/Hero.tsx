@@ -88,71 +88,34 @@ function useParallax(imgRef: RefObject<HTMLImageElement | null>) {
 export function Hero() {
   const typedText = useTypedText()
   const imgRef = useRef<HTMLImageElement>(null)
-  const sectionRef = useRef<HTMLElement>(null)
-
   useParallax(imgRef)
-
-  // Kirim ulang mouse event ke canvas Spline supaya tracking-nya akurat
-  useEffect(() => {
-    const section = sectionRef.current
-    if (!section) return
-
-    function relayMouse(e: MouseEvent) {
-      const canvas = section!.querySelector('canvas')
-      if (!canvas) return
-      const syntheticEvent = new MouseEvent('mousemove', {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      })
-      canvas.dispatchEvent(syntheticEvent)
-    }
-
-    section.addEventListener('mousemove', relayMouse)
-    return () => section.removeEventListener('mousemove', relayMouse)
-  }, [])
 
   return (
     <section
-      ref={sectionRef}
       id="hero"
       className="min-h-screen flex flex-col md:flex-row items-center px-6 md:px-20 gap-10 md:gap-15 relative overflow-hidden pt-20 md:pt-0 text-center md:text-left"
     >
-      {/* Robot Spline — full section, pointer-events aktif untuk interaksi cursor */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{ isolation: 'isolate' }}
-      >
-        <SplineScene
-          scene={SPLINE_SCENE_URL}
-          className="w-full h-full"
-        />
+      {/* Robot Spline — z-0, pointer-events aktif supaya cursor bisa interaksi */}
+      <div className="absolute inset-0 z-0">
+        <SplineScene scene={SPLINE_SCENE_URL} className="w-full h-full" />
 
-        {/* Penutup watermark Spline — z tinggi supaya tetap tertutup */}
+        {/* Penutup watermark */}
         <div
           className="absolute bottom-0 right-0 w-72 h-20 pointer-events-none"
-          style={{
-            zIndex: 10,
-            background: 'linear-gradient(to top left, #080b12 65%, transparent 100%)',
-          }}
+          style={{ zIndex: 2, background: 'linear-gradient(to top left, #080b12 65%, transparent 100%)' }}
         />
         <div
           className="absolute bottom-0 right-0 w-56 h-12 pointer-events-none rounded-tl-2xl"
-          style={{ zIndex: 11, background: '#080b12' }}
+          style={{ zIndex: 3, background: '#080b12' }}
         />
       </div>
 
-      {/* Overlay gradasi — pointer-events-none agar tidak block robot */}
+      {/* Overlay gradasi */}
       <div className="absolute inset-0 z-[1] bg-gradient-to-b from-bg/40 via-bg/10 to-bg/60 pointer-events-none" />
 
-      {/* Content — z lebih tinggi, pointer-events aktif untuk tombol & link */}
-      <div className="flex-1 relative z-10 pointer-events-none">
-        {/* pointer-events-none di wrapper, tapi aktif di elemen interaktif */}
-        <div
-          className="inline-flex items-center gap-2 bg-accent/10 border border-accent/25 rounded-full px-4 py-1.5 text-[0.72rem] text-accent font-semibold mb-7 tracking-widest uppercase pointer-events-auto"
-        >
+      {/* Content — z-10 di atas robot, pointer-events normal */}
+      <div className="flex-1 relative z-10">
+        <div className="inline-flex items-center gap-2 bg-accent/10 border border-accent/25 rounded-full px-4 py-1.5 text-[0.72rem] text-accent font-semibold mb-7 tracking-widest uppercase">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-green" />
           Open for opportunities
         </div>
@@ -188,7 +151,7 @@ export function Hero() {
           exploring machine learning, web development, and digital forensics.
         </p>
 
-        <div className="flex gap-3.5 justify-center md:justify-start flex-wrap pointer-events-auto">
+        <div className="flex gap-3.5 justify-center md:justify-start flex-wrap">
           <a
             href="https://www.linkedin.com/in/pandu-bashir-alamin-a357a8331/"
             target="_blank"
@@ -197,7 +160,6 @@ export function Hero() {
           >
             Get In Touch →
           </a>
-
           <a
             href="#projects"
             className="px-7 py-3 rounded-xl font-semibold text-[0.82rem] no-underline transition-all inline-flex items-center gap-2 tracking-widest uppercase bg-white/4 border border-white/8 text-muted2 backdrop-blur-md hover:border-accent/40 hover:text-accent hover:-translate-y-0.5"
@@ -212,7 +174,7 @@ export function Hero() {
         <img
           ref={imgRef}
           id="hero-img"
-          className="hero-profile-img relative w-full h-full object-cover object-top block transition-transform duration-100 ease-out"
+          className="hero-profile-img w-full h-full object-cover object-top block"
           src="/poto-pandu.jpeg"
           alt="Pandu Bashir Alamin"
         />
